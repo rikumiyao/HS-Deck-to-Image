@@ -5,19 +5,20 @@
 
 # In[1]:
 
-import csv
+from backports import csv
 from hearthstone.deckstrings import Deck
 import json
 #Python3 version https://python-pillow.org/
 from PIL import Image, ImageDraw, ImageFont
+import io
 
 
 # In[2]:
 
-#https://github.com/HearthSim/Hearthstone-Deck-Tracker/tree/master/Resources/Tiles
+#https://github.com/HearthSim/hs-card-tiles
 tile_url = 'Tiles/'
 #Might have to massage the csv file to have valid deck codes for every person
-decklists = '2017 HCT Americas Summer Playoffs Decklists.csv'
+decklists = 'extra.csv'
 #https://api.hearthstonejson.com/v1/latest/enUS/cards.collectible.json
 cards_json = 'cards.collectible.json'
 #stolen from https://deck.codes/ which was probably stolen from Hearthstone or HDT
@@ -26,7 +27,7 @@ tile_container_open = 'resources/tile_container_open.png'
 star = 'resources/star.png'
 
 #Where the images are generated, create an empty directory if you are running this the first time
-deck_url = 'AM/'
+deck_url = 'extra/'
 deck_font = 'resources/Ubuntu-B.ttf'
 name_font = 'resources/NotoSansCJK-Bold.ttc'
 
@@ -57,23 +58,19 @@ def interpolate_color(minval, maxval, val, color_palette):
 # In[5]:
 
 def find_code(text):
-    lines = text.strip().splitlines()
-    index = -1
-    while lines[index].endswith('Hearthstone.') or not lines[index].strip():
-        index-=1
-    return lines[index]
-def find_code_apac(text):
-    lines = text.strip().splitlines()
-    index = -1
-    while lines[index].startswith('#') or not lines[index].strip():
-        index-=1
-    return lines[index]
+    line = text.strip()
+    for x in line.split(' '):
+        if x.startswith('AAE'):
+            return x
+    return line
 def parse_deck(text):
-    try:
-        deck = Deck.from_deckstring(text)
-    except:
-        print(text)
-    return deck
+    for i in range(3):
+        try:
+            deck = Deck.from_deckstring(text+'='*i)
+            return deck
+        except Exception as e:
+            continue
+    return None
 def deck_to_image(deck, name):
     hero = card_dict[deck.heroes[0]]
     imclass = Image.open('resources/{}.jpg'.format(hero['playerClass'].lower()))
@@ -127,8 +124,10 @@ def deck_to_image(deck, name):
     master.paste(decklist, (0,97,243,39*len(cards)+97))
     master.paste(imclass, (0,0,243,97))
     font = ImageFont.truetype(name_font, 19)
-    w,h = draw.textsize('{} {}'.format(name, hero['playerClass']), font=font)
-    draw.text((22, 75-h), '{} {}'.format(name, hero['playerClass'][0]+hero['playerClass'][1:].lower()), font=font)
+    #title = u'{} {}'.format(name, hero['playerClass'][0]+hero['playerClass'][1:].lower())
+    title = name
+    w,h = draw.textsize(title, font=font)
+    draw.text((22, 75-h), title, font=font)
     return master
 
 
@@ -148,9 +147,10 @@ def merge(imgs):
 
 # In[7]:
 
-def process_EU():
-    with open(decklists) as csvfile:
-        deckreader = csv.reader(csvfile, delimiter = ',', quotechar='"')
+def process():
+    names = []
+    with io.open(decklists, "r", encoding="utf-8") as csvfile:
+        deckreader = csv.reader(csvfile)
         decks = list(deckreader)
         for row in decks:
             name = row[0]
@@ -158,42 +158,22 @@ def process_EU():
             for deck in row[1:]:
                 decklist = find_code(deck)
                 deck = parse_deck(decklist)
-                img = deck_to_image(deck, name)
-                deck_imgs.append(img)
-            img = merge(deck_imgs)
-            img.save('{}{}.jpg'.format(deck_url,name), 'JPEG')
-
-
-# In[8]:
-
-def process_AP():
-    x = []
-    with open(decklists) as csvfile:
-        deckreader = csv.reader(csvfile, delimiter = ',', quotechar='"')
-        decks = list(deckreader)
-        for row in decks:
-            name = row[0]
-            deck_imgs = []
-            for deck in row[1:]:
-                decklist = find_code_apac(deck)
-                if 'imgur' not in decklist:
-                    deck = parse_deck(decklist)
+                if deck!=None:
                     img = deck_to_image(deck, name)
                     deck_imgs.append(img)
-            if len(deck_imgs)>0:
+                else:
+                    fail = decklist
+            if len(deck_imgs)!=0:
                 img = merge(deck_imgs)
-                img.save('{}{}.jpg'.format(deck_url,name), 'JPEG')
-            x.append(name)
-    for a in sorted(x, key=str.upper):
+                img.save(u'{}{}.jpg'.format(deck_url,name), 'JPEG')
+            if len(deck_imgs) < 4:
+                print(u'{} {}'.format(name, fail))
+                names.append(name)
+    for a in names:
         print(a)
-
-
-# In[10]:
-
-process_AP()
 
 
 # In[ ]:
 
-
-
+if __name__=="__main__":
+    process()
