@@ -1,24 +1,19 @@
 
-# coding: utf-8
-
 # # Created by Riku Miyao (@YAYtears)
 
-# In[1]:
 
 from backports import csv
 from hearthstone.deckstrings import Deck
 import json
-#Python3 version https://python-pillow.org/
+#Python3 version https://pillow.readthedocs.io
 from PIL import Image, ImageDraw, ImageFont
 import io
+import sys
 
-
-# In[2]:
 
 #https://github.com/HearthSim/hs-card-tiles
 tile_url = 'Tiles/'
-#Might have to massage the csv file to have valid deck codes for every person
-decklists = 'extra.csv'
+
 #https://api.hearthstonejson.com/v1/latest/enUS/cards.collectible.json
 cards_json = 'cards.collectible.json'
 #stolen from https://deck.codes/ which was probably stolen from Hearthstone or HDT
@@ -26,13 +21,8 @@ tile_container_number = 'resources/tile_container_number.png'
 tile_container_open = 'resources/tile_container_open.png'
 star = 'resources/star.png'
 
-#Where the images are generated, create an empty directory if you are running this the first time
-deck_url = 'extra/'
 deck_font = 'resources/Ubuntu-B.ttf'
 name_font = 'resources/NotoSansCJK-Bold.ttc'
-
-
-# In[3]:
 
 card_dict = {}
 with open(cards_json) as json_file:
@@ -40,8 +30,6 @@ with open(cards_json) as json_file:
     for card in data:
         card_dict[card['dbfId']] = card
 
-
-# In[4]:
 
 def interpolate_color(minval, maxval, val, color_palette):
     """ Computes intermediate RGB color of a value in the range of minval-maxval
@@ -54,8 +42,6 @@ def interpolate_color(minval, maxval, val, color_palette):
     f = v - i1
     return int(r1 + f*(r2-r1)), int(g1 + f*(g2-g1)), int(b1 + f*(b2-b1)), int(a1 + f*(a2-a1))
 
-
-# In[5]:
 
 def find_code(text):
     line = text.strip()
@@ -131,8 +117,6 @@ def deck_to_image(deck, name):
     return master
 
 
-# In[6]:
-
 def merge(imgs):
     width = sum(x.size[0] for x in imgs)
     height = max(x.size[1] for x in imgs)
@@ -145,9 +129,7 @@ def merge(imgs):
     return master
 
 
-# In[7]:
-
-def process():
+def process(decklists, deck_url):
     names = []
     with io.open(decklists, "r", encoding="utf-8") as csvfile:
         deckreader = csv.reader(csvfile)
@@ -165,7 +147,7 @@ def process():
                     fail = decklist
             if len(deck_imgs)!=0:
                 img = merge(deck_imgs)
-                img.save(u'{}{}.jpg'.format(deck_url,name), 'JPEG')
+                img.save(u'{}/{}.jpg'.format(deck_url,name), 'JPEG')
             if len(deck_imgs) < 4:
                 print(u'{} {}'.format(name, fail))
                 names.append(name)
@@ -173,7 +155,14 @@ def process():
         print(a)
 
 
-# In[ ]:
+#Might have to massage the csv file to have valid deck codes for every person
+decklists = 'decklists.csv'
+#Where the images are generated, create an empty directory if you are running this the first time
+deck_url = 'decks'
 
 if __name__=="__main__":
-    process()
+    if len(sys.argv)!=3:
+        print("Usage: python decktoimage.py deckcsv destination")
+    else:
+        process(sys.argv[1], sys.argv[2])
+
