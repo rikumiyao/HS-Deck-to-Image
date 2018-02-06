@@ -2,7 +2,7 @@
 
 A python script for converting Hearthstone deck codes from a csv to deck images.
 
-##Requirements
+## Requirements
 
 * Python 2.7+
 * [python-hearthstone](https://github.com/hearthsim/python-hearthstone)
