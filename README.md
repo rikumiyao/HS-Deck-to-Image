@@ -21,8 +21,9 @@ Each line in the CSV file should be of the format "Name, Deck code #1, Deck code
 The ipython notebook uses decklists.csv as the default source and /decks (Create this yourself) as the default directory. However, running decktoimage.py allows you to specify command line parameters.
 
 To run the python script, run `python decktoimage.py CSVFILE DESTDIRECTORY`
+WARNING: The files in DESTDIRECTORY will be cleared to leave room for alphabetical deck directories.
 
-Used in the Hearthstone Summer Playoffs, the Copa America HCT Tour Stop Qualifiers, and the Sydney Stop HCT Qualifiers.
+Used in for various official Hearthstone tournaments, including HCT Tour Stops, HCT Playoffs, and Tespa Championships.
 
 Example image generated:  
 ![YAYtears deck image](https://imgur.com/HApi5AW.jpg "YAYtears deck image")

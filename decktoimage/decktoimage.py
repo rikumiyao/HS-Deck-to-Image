@@ -1,14 +1,20 @@
 
-# # Created by Riku Miyao (@YAYtears)
+# coding: utf-8
 
+# # Created by Riku Miyao (@YAYtears)
 
 from backports import csv
 from hearthstone.deckstrings import Deck
+from hearthstone.deckstrings import FormatType
 import json
 #Python3 version https://pillow.readthedocs.io
 from PIL import Image, ImageDraw, ImageFont
 import io
 import sys
+import os
+import shutil
+import re
+import requests
 
 
 #https://github.com/HearthSim/hs-card-tiles
@@ -21,7 +27,7 @@ tile_container_number = 'resources/tile_container_number.png'
 tile_container_open = 'resources/tile_container_open.png'
 star = 'resources/star.png'
 
-deck_font = 'resources/Ubuntu-B.ttf'
+deck_font = 'resources/Belwe-Bold.ttf'
 name_font = 'resources/NotoSansCJK-Bold.ttc'
 
 card_dict = {}
@@ -29,7 +35,6 @@ with open(cards_json) as json_file:
     data = json.load(json_file)
     for card in data:
         card_dict[card['dbfId']] = card
-
 
 def interpolate_color(minval, maxval, val, color_palette):
     """ Computes intermediate RGB color of a value in the range of minval-maxval
@@ -41,7 +46,13 @@ def interpolate_color(minval, maxval, val, color_palette):
     (r1, g1, b1, a1), (r2, g2, b2, a2) = color_palette[i1], color_palette[i2]
     f = v - i1
     return int(r1 + f*(r2-r1)), int(g1 + f*(g2-g1)), int(b1 + f*(b2-b1)), int(a1 + f*(a2-a1))
+def draw_shadow(draw,x,y,text,font,shadowcolor="black"):
 
+    # thin border
+    draw.text((x-1, y-1), text, font=font, fill=shadowcolor)
+    draw.text((x+1, y+1), text, font=font, fill=shadowcolor)
+    draw.text((x+1, y-1), text, font=font, fill=shadowcolor)
+    draw.text((x-1, y+1), text, font=font, fill=shadowcolor)
 
 def find_code(text):
     line = text.strip()
@@ -58,8 +69,12 @@ def parse_deck(text):
             continue
     return None
 def deck_to_image(deck, name):
+    if deck.heroes[0]==1325:
+        deck.heroes[0] = 637 #idk where this came from but apparently its mage lol
+    if deck.heroes[0] not in card_dict:
+        print(deck.as_deckstring)
     hero = card_dict[deck.heroes[0]]
-    imclass = Image.open('resources/{}.jpg'.format(hero['playerClass'].lower()))
+    imclass = Image.open('resources/{}.jpg'.format(hero['cardClass'].lower()))
     cards = [(card_dict[x[0]],x[1]) for x in deck.cards]
     cards.sort(key = lambda x:(x[0]['cost'], x[0]['name']))
     width = 243
@@ -86,7 +101,10 @@ def deck_to_image(deck, name):
         master = Image.alpha_composite(master, gradient)
         draw = ImageDraw.Draw(master)
         font = ImageFont.truetype(deck_font, 15)
-        draw.text((39, 10+39*index), card['name'], font=font)
+
+        draw_shadow(draw, 39, 13+39*index, card['name'],font)
+        draw.text((39, 13+39*index), card['name'], font=font)
+
         if count==2:
             bg = Image.open(tile_container_number)
             master.paste(bg, (0,39*index, 239, 39*(index+1)), bg)
@@ -104,6 +122,7 @@ def deck_to_image(deck, name):
         msg = str(card['cost'])
         w, h = draw.textsize(msg, font=font)
         font = ImageFont.truetype(deck_font, 16)
+        draw_shadow(draw,(34-w)/2,(39-h)/2+39*index,str(card['cost']), font)
         draw.text(((34-w)/2, (39-h)/2+39*index), str(card['cost']), font=font)
         #draw.text()
     decklist = master.crop((0,0,243,39*len(cards)))
@@ -113,9 +132,9 @@ def deck_to_image(deck, name):
     #title = u'{} {}'.format(name, hero['playerClass'][0]+hero['playerClass'][1:].lower())
     title = name
     w,h = draw.textsize(title, font=font)
+    draw_shadow(draw, 22, 75-h, title, font)
     draw.text((22, 75-h), title, font=font)
     return master
-
 
 def merge(imgs):
     width = sum(x.size[0] for x in imgs)
@@ -128,38 +147,82 @@ def merge(imgs):
         x+=w
     return master
 
-
+def setup_dirs(url):
+    if os.path.exists(url):
+        if os.path.isdir(url):
+            shutil.rmtree(url)
+        else:
+            os.remove(deck_url)
+    os.makedirs(url)
+    for x in range(ord('A'),ord('Z')+1):
+        addr = '{}/{}'.format(url,chr(x))
+        if os.path.exists(addr):
+            if os.path.isdir(addr):
+                shutil.rmtree(addr)
+            else:
+                os.remove(addr)
+        os.makedirs(addr)
+    addr = '{}/{}'.format(deck_url,'etc')
+    if os.path.exists(addr):
+        if os.path.isdir(addr):
+            shutil.rmtree(addr)
+        else:
+            os.remove(addr)
+    os.makedirs(addr)
 def process(decklists, deck_url):
+    setup_dirs(deck_url)
+    all_names = {}
     names = []
+    classes = {}
     with io.open(decklists, "r", encoding="utf-8") as csvfile:
-        deckreader = csv.reader(csvfile)
-        decks = list(deckreader)
-        for row in decks:
-            name = row[0]
+        deckreader = csv.reader(csvfile, delimiter=u',')
+        fail = ''
+        for row in deckreader:
+            name = row[1]
+            uni = row[2]
+            abb = ''
+            for x in re.split('[ -]',uni):
+                if len(x) > 0 and x[0].isupper():
+                    abb += x[0]
+            name += '[' + abb + ']'
+            name = name.replace('/','\\')
+            if name not in all_names:
+                all_names[name] = 0
+            else:
+                all_names[name] += 1
+                print('extra ' + name)
+                name = name + str(all_names[name])
             deck_imgs = []
-            for deck in row[1:]:
+            for deck in row[3:]:
                 decklist = find_code(deck)
                 deck = parse_deck(decklist)
                 if deck!=None:
                     img = deck_to_image(deck, name)
+                    hero = card_dict[deck.heroes[0]]['cardClass']
+                    if hero not in classes:
+                        classes[hero] = 0
+                    classes[hero]+=1
                     deck_imgs.append(img)
                 else:
                     fail = decklist
             if len(deck_imgs)!=0:
                 img = merge(deck_imgs)
-                img.save(u'{}/{}.jpg'.format(deck_url,name), 'JPEG')
+                img = img.convert('RGB')
+                if (ord(name[0].upper())>=ord('A') and ord(name[0].upper())<=ord('Z')):
+                    img.save(u'{}/{}/{}.jpg'.format(deck_url,name[0].upper(),name), 'JPEG')
+                else:
+                    img.save(u'{}/{}/{}.jpg'.format(deck_url,'etc',name), 'JPEG')
             if len(deck_imgs) < 4:
-                print(u'{} {}'.format(name, fail))
+                print(u'Less than 4 decks {} {}'.format(name, fail))
                 names.append(name)
     for a in names:
-        print(a)
+        print("Missing or invalid decklists from {}".format(a))
 
 
 #Might have to massage the csv file to have valid deck codes for every person
 decklists = 'decklists.csv'
-#Where the images are generated, create an empty directory if you are running this the first time
+#Where the images are generated. This directory is cleared everytime the program is run
 deck_url = 'decks'
-
 if __name__=="__main__":
     if len(sys.argv)!=3:
         print("Usage: python decktoimage.py deckcsv destination")
