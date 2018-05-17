@@ -4,10 +4,9 @@ A python script for converting Hearthstone deck codes from a csv to deck images.
 
 ## Requirements
 
-* Python 2.7+
+* Python 3.6+
 * [python-hearthstone](https://github.com/hearthsim/python-hearthstone)
-* [Python Imaging Library](http://www.pythonware.com/products/pil/)
-  * If you are using Python 3 use the fork [link](https://pillow.readthedocs.io)
+* [Python Imaging Library](https://pillow.readthedocs.io)
 * [backports.csv](https://pypi.python.org/pypi/backports.csv)
 
 ## Installation
@@ -17,14 +16,15 @@ TODO
 
 Please download tiles from [https://github.com/HearthSim/hs-card-tiles](https://github.com/HearthSim/hs-card-tiles) and put in Tiles directory.
 
-Each line in the CSV file should be of the format "Name, Deck code #1, Deck code #2, Deck code #3, Deck code #4"
-The ipython notebook uses decklists.csv as the default source and /decks (Create this yourself) as the default directory. However, running decktoimage.py allows you to specify command line parameters.
+The first line in the CSV file will be the schema for the rest of the file. It will be a comma separated list of arguments with the same length as the rest of the rows of the file. Leave unused fields blank, and use "K" for keys (which will group the decklists and control what the image file is named as), and "D" for deck codes to be parsed by the script.
+
+For example, a schema of "K,D,D,D,D" in the first line of the csv will indicate that the followings lines have the form "Name/Key, Deck Code #1, Deck Code #2, Deck Code #3, Deck Code #4", which a schema of "K,,D" will indicate the form of "Name/Key, \[Irrelevant\], Deck Code" and the program will group deck codes corresponding to the same key to the same deck image.
 
 To run the python script, run `python decktoimage.py CSVFILE DESTDIRECTORY`
-WARNING: The files in DESTDIRECTORY will be cleared to leave room for alphabetical deck directories.
+The DESTDIRECTORY will be created if it doesn't exist and the contents of the directory will not be overwritten if it already exists, so make sure to clear the directory first if you want to create new deck images.
 
 Used in for various official Hearthstone tournaments, including HCT Tour Stops, HCT Playoffs, and Tespa Championships.
 
 Example image generated:  
-![YAYtears deck image](https://imgur.com/HApi5AW.jpg "YAYtears deck image")
+![killinallday deck image](https://imgur.com/9Yr0CCd "YAYtears deck image")
 

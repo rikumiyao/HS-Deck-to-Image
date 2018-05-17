@@ -148,81 +148,67 @@ def merge(imgs):
     return master
 
 def setup_dirs(url):
-    if os.path.exists(url):
-        if os.path.isdir(url):
-            shutil.rmtree(url)
-        else:
-            os.remove(deck_url)
-    os.makedirs(url)
+    if not os.path.exists(url):
+        os.makedirs(url)
     for x in range(ord('A'),ord('Z')+1):
         addr = '{}/{}'.format(url,chr(x))
-        if os.path.exists(addr):
-            if os.path.isdir(addr):
-                shutil.rmtree(addr)
-            else:
-                os.remove(addr)
+        if not os.path.exists(addr):
+            os.makedirs(addr)
+    addr = '{}/{}'.format(url,'etc')
+    if not os.path.exists(addr):
         os.makedirs(addr)
-    addr = '{}/{}'.format(deck_url,'etc')
-    if os.path.exists(addr):
-        if os.path.isdir(addr):
-            shutil.rmtree(addr)
-        else:
-            os.remove(addr)
-    os.makedirs(addr)
+    addr = '{}/{}'.format(url,'_All')
+    if not os.path.exists(addr):
+        os.makedirs(addr)
+
 def process(decklists, deck_url):
     setup_dirs(deck_url)
     all_names = {}
-    names = []
-    classes = {}
     with io.open(decklists, "r", encoding="utf-8") as csvfile:
         deckreader = csv.reader(csvfile, delimiter=u',')
+        deckreader = list(deckreader)
         fail = ''
-        for row in deckreader:
-            name = row[1]
-            uni = row[2]
-            abb = ''
-            for x in re.split('[ -]',uni):
-                if len(x) > 0 and x[0].isupper():
-                    abb += x[0]
-            name += '[' + abb + ']'
+        schemaLine = deckreader[0]
+        schema = []
+        key = 0
+        for index, x in enumerate(schemaLine):
+            if x=='D':
+                schema.append('D')
+            elif x=='K':
+                schema.append('K')
+                key = index
+            else:
+                schema.append('')
+        for row in deckreader[1:]:
+            name = row[key]
             name = name.replace('/','\\')
             if name not in all_names:
-                all_names[name] = 0
-            else:
-                all_names[name] += 1
-                print('extra ' + name)
-                name = name + str(all_names[name])
-            deck_imgs = []
-            for deck in row[3:]:
-                decklist = find_code(deck)
+                all_names[name] = []
+            for index, a in enumerate(schema):
+                if a!='D':
+                    continue
+                decklist = find_code(row[index])
                 deck = parse_deck(decklist)
+                all_names[name].append(deck)
+        for name in all_names:
+            deck_imgs = []
+            for deck in all_names[name]:
                 if deck!=None:
                     img = deck_to_image(deck, name)
-                    hero = card_dict[deck.heroes[0]]['cardClass']
-                    if hero not in classes:
-                        classes[hero] = 0
-                    classes[hero]+=1
                     deck_imgs.append(img)
-                else:
-                    fail = decklist
-            if len(deck_imgs)!=0:
-                img = merge(deck_imgs)
-                img = img.convert('RGB')
-                if (ord(name[0].upper())>=ord('A') and ord(name[0].upper())<=ord('Z')):
-                    img.save(u'{}/{}/{}.jpg'.format(deck_url,name[0].upper(),name), 'JPEG')
-                else:
-                    img.save(u'{}/{}/{}.jpg'.format(deck_url,'etc',name), 'JPEG')
-            if len(deck_imgs) < 4:
-                print(u'Less than 4 decks {} {}'.format(name, fail))
-                names.append(name)
-    for a in names:
-        print("Missing or invalid decklists from {}".format(a))
+            img = merge(deck_imgs)
+            img = img.convert('RGB')
+            if (ord(name[0].upper())>=ord('A') and ord(name[0].upper())<=ord('Z')):
+                img.save(u'{}/{}/{}.jpg'.format(deck_url,name[0].upper(),name), 'JPEG')
+            else:
+                img.save(u'{}/{}/{}.jpg'.format(deck_url,'etc',name), 'JPEG')
+            img.save(u'{}/{}/{}.jpg'.format(deck_url,'_All',name), 'JPEG')
 
 
 #Might have to massage the csv file to have valid deck codes for every person
 decklists = 'decklists.csv'
-#Where the images are generated. This directory is cleared everytime the program is run
-deck_url = 'decks'
+#Where the images are generated. This directory is not cleared when the program
+#is run, and the contents of the directory are not overwritten
 if __name__=="__main__":
     if len(sys.argv)!=3:
         print("Usage: python decktoimage.py deckcsv destination")
