@@ -26,5 +26,5 @@ The DESTDIRECTORY will be created if it doesn't exist and the contents of the di
 Used in for various official Hearthstone tournaments, including HCT Tour Stops, HCT Playoffs, and Tespa Championships.
 
 Example image generated:  
-![killinallday deck image](https://imgur.com/9Yr0CCd "YAYtears deck image")
+![killinallday deck image](https://imgur.com/9Yr0CCd.jpg "YAYtears deck image")
 
