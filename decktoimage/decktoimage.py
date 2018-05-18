@@ -14,7 +14,6 @@ import sys
 import os
 import shutil
 import re
-import requests
 
 
 #https://github.com/HearthSim/hs-card-tiles
