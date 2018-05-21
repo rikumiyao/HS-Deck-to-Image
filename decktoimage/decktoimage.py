@@ -30,7 +30,7 @@ deck_font = 'resources/Belwe-Bold.ttf'
 name_font = 'resources/NotoSansCJK-Bold.ttc'
 
 card_dict = {}
-with open(cards_json) as json_file:
+with open(cards_json, encoding="utf-8") as json_file:
     data = json.load(json_file)
     for card in data:
         card_dict[card['dbfId']] = card
@@ -204,8 +204,6 @@ def process(decklists, deck_url):
             img.save(u'{}/{}/{}.jpg'.format(deck_url,'_All',name), 'JPEG')
 
 
-#Might have to massage the csv file to have valid deck codes for every person
-decklists = 'decklists.csv'
 #Where the images are generated. This directory is not cleared when the program
 #is run, and the contents of the directory are not overwritten
 if __name__=="__main__":
