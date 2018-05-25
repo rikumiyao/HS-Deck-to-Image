@@ -15,10 +15,10 @@ import argparse
 
 
 #https://github.com/HearthSim/hs-card-tiles
-tile_url = 'Tiles/'
+tile_url = 'hs-card-tiles/Tiles/'
 
 #https://api.hearthstonejson.com/v1/latest/enUS/cards.collectible.json
-cards_json = 'cards.collectible.json'
+cards_json = 'resources/cards.collectible.json'
 #stolen from https://deck.codes/ which was probably stolen from Hearthstone or HDT
 tile_container_number = 'resources/tile_container_number.png'
 tile_container_open = 'resources/tile_container_open.png'

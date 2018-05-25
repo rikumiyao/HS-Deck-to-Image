@@ -11,7 +11,22 @@ A python script for converting Hearthstone deck codes from a csv to deck images.
 
 ## Setup
 
-Please clone the repo here [https://github.com/HearthSim/hs-card-tiles](https://github.com/HearthSim/hs-card-tiles) and move the `Tiles` directory in the repo to `decktoimage/`.
+Clone this repository first, then clone the hs-card-tiles repo [https://github.com/HearthSim/hs-card-tiles](https://github.com/HearthSim/hs-card-tiles) within the `decktoimage/` directory.
+
+After this is done, download cards.collectible.json and put it to your resources directory.
+
+```
+git clone https://github.com/rikumiyao/HS-Deck-to-Image.git
+cd decktoimage
+git clone https://github.com/HearthSim/hs-card-tiles
+curl -L https://api.hearthstonejson.com/v1/latest/enUS/cards.collectible.json > resources/cards.collectible.json
+```
+When you want to update the tiles, pull from the hs-card-tiles repo:
+```
+cd decktoimage/hs-card-tiles
+git pull origin master
+```
+If you want to update cards.collectible.json, run the curl command again.
 
 If this repo hasn't been updated recently, update the current hs.cards.collectible.json to the one found at [https://api.hearthstonejson.com/v1/latest/](https://api.hearthstonejson.com/v1/latest/).
 
