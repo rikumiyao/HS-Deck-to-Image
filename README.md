@@ -9,23 +9,37 @@ A python script for converting Hearthstone deck codes from a csv to deck images.
 * [Python Imaging Library](https://pillow.readthedocs.io)
 * [backports.csv](https://pypi.python.org/pypi/backports.csv)
 
-## Installation
-TODO
-
-## To Run
+## Setup
 
 Please clone the repo here [https://github.com/HearthSim/hs-card-tiles](https://github.com/HearthSim/hs-card-tiles) and move the `Tiles` directory in the repo to `decktoimage/`.
 
 If this repo hasn't been updated recently, update the current hs.cards.collectible.json to the one found at [https://api.hearthstonejson.com/v1/latest/](https://api.hearthstonejson.com/v1/latest/).
 
+## Usage
+
+```
+usage: decktoimage.py [-h] [--ordered] deckcsv destination
+
+create deck images from a csv file
+
+positional arguments:
+  deckcsv      the csv file containing all the decklists. The first line must
+               be the schema, and all other lines must follow the schema
+  destination  where the images are generated
+
+optional arguments:
+  -h, --help   show this help message and exit
+  --ordered    set whether images should be grouped by the first letter of the
+               key
+```
+
+## CSV formatting
+
 The first line in the CSV file will be the schema for the rest of the file. It will be a comma separated list of arguments with the same length as the rest of the rows of the file. Leave unused fields blank, and use "K" for keys (which will group the decklists and control what the image file is named as), and "D" for deck codes to be parsed by the script.
 
 For example, a schema of `K,D,D,D,D` in the first line of the csv will indicate that the followings lines have the form "Name/Key, Deck Code #1, Deck Code #2, Deck Code #3, Deck Code #4", which a schema of "K,,D" will indicate the form of "Name/Key, \[Irrelevant\], Deck Code" and the program will group deck codes corresponding to the same key to the same deck image.
 
-To run the python script, run `python decktoimage.py CSVFILE DESTDIRECTORY`
-The DESTDIRECTORY will be created if it doesn't exist. However, if the directory already exists, its contents will not be overwritten, so make sure to clear the directory first if you want to create a new set of deck images.
-
-Used in for various official Hearthstone tournaments, including HCT Tour Stops, HCT Playoffs, and Tespa Championships.
+## Example Usage
 
 Example image generated using the following input:
 ```

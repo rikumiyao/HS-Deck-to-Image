@@ -10,10 +10,8 @@ import json
 #Python3 version https://pillow.readthedocs.io
 from PIL import Image, ImageDraw, ImageFont
 import io
-import sys
 import os
-import shutil
-import re
+import argparse
 
 
 #https://github.com/HearthSim/hs-card-tiles
@@ -45,8 +43,8 @@ def interpolate_color(minval, maxval, val, color_palette):
     (r1, g1, b1, a1), (r2, g2, b2, a2) = color_palette[i1], color_palette[i2]
     f = v - i1
     return int(r1 + f*(r2-r1)), int(g1 + f*(g2-g1)), int(b1 + f*(b2-b1)), int(a1 + f*(a2-a1))
-def draw_shadow(draw,x,y,text,font,shadowcolor="black"):
 
+def draw_shadow(draw,x,y,text,font,shadowcolor="black"):
     # thin border
     draw.text((x-1, y-1), text, font=font, fill=shadowcolor)
     draw.text((x+1, y+1), text, font=font, fill=shadowcolor)
@@ -59,6 +57,7 @@ def find_code(text):
         if x.startswith('AAE'):
             return x
     return line
+
 def parse_deck(text):
     for i in range(3):
         try:
@@ -67,9 +66,8 @@ def parse_deck(text):
         except Exception as e:
             continue
     return None
+
 def deck_to_image(deck, name):
-    if deck.heroes[0]==1325:
-        deck.heroes[0] = 637 #idk where this came from but apparently its mage lol
     if deck.heroes[0] not in card_dict:
         print(deck.as_deckstring)
     hero = card_dict[deck.heroes[0]]
@@ -148,20 +146,20 @@ def merge(imgs):
 
 def setup_dirs(url):
     if not os.path.exists(url):
-        os.makedirs(url)
+        raise Exception('Directory {} does not exist'.format(url))
+    if not os.path.isdir(url):
+        raise Exception('{} is not a directory'.format(url))
     for x in range(ord('A'),ord('Z')+1):
         addr = '{}/{}'.format(url,chr(x))
         if not os.path.exists(addr):
-            os.makedirs(addr)
+            os.mkdir(addr)
     addr = '{}/{}'.format(url,'etc')
     if not os.path.exists(addr):
-        os.makedirs(addr)
-    addr = '{}/{}'.format(url,'_All')
-    if not os.path.exists(addr):
-        os.makedirs(addr)
+        os.mkdir(addr)
 
-def process(decklists, deck_url):
-    setup_dirs(deck_url)
+def process(decklists, deck_url, ordered=False):
+    if ordered:
+        setup_dirs(deck_url)
     all_names = {}
     with io.open(decklists, "r", encoding="utf-8") as csvfile:
         deckreader = csv.reader(csvfile, delimiter=u',')
@@ -195,20 +193,25 @@ def process(decklists, deck_url):
                 if deck!=None:
                     img = deck_to_image(deck, name)
                     deck_imgs.append(img)
+            if len(deck_imgs)==0:
+                print('Player {} has no decks'.format(name))
+                continue
             img = merge(deck_imgs)
             img = img.convert('RGB')
-            if (ord(name[0].upper())>=ord('A') and ord(name[0].upper())<=ord('Z')):
-                img.save(u'{}/{}/{}.jpg'.format(deck_url,name[0].upper(),name), 'JPEG')
+            if ordered:
+                if (ord(name[0].upper())>=ord('A') and ord(name[0].upper())<=ord('Z')):
+                    img.save(u'{}/{}/{}.jpg'.format(deck_url,name[0].upper(),name), 'JPEG')
+                else:
+                    img.save(u'{}/{}/{}.jpg'.format(deck_url,'etc',name), 'JPEG')
             else:
-                img.save(u'{}/{}/{}.jpg'.format(deck_url,'etc',name), 'JPEG')
-            img.save(u'{}/{}/{}.jpg'.format(deck_url,'_All',name), 'JPEG')
+                img.save(u'{}/{}.jpg'.format(deck_url,name), 'JPEG')
 
 
-#Where the images are generated. This directory is not cleared when the program
-#is run, and the contents of the directory are not overwritten
 if __name__=="__main__":
-    if len(sys.argv)!=3:
-        print("Usage: python decktoimage.py deckcsv destination")
-    else:
-        process(sys.argv[1], sys.argv[2])
+    parser = argparse.ArgumentParser(description="create deck images from a csv file")
+    parser.add_argument("deckcsv", help='the csv file containing all the decklists. The first line must be the schema, and all other lines must follow the schema')
+    parser.add_argument("destination", help='where the images are generated')
+    parser.add_argument("--ordered", help="set whether images should be grouped by the first letter of the key", action="store_true")
+    args = parser.parse_args()
+    process(args.deckcsv, args.destination, ordered=args.ordered)
 
