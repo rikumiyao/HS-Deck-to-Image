@@ -8,6 +8,7 @@ A python script for converting Hearthstone deck codes from a csv to deck images.
 * [python-hearthstone](https://github.com/hearthsim/python-hearthstone)
 * [Python Imaging Library](https://pillow.readthedocs.io)
 * [backports.csv](https://pypi.python.org/pypi/backports.csv)
+* [Requests](http://docs.python-requests.org)
 
 ## Setup
 
