@@ -1,25 +1,24 @@
-
-# coding: utf-8
-
-# # Created by Riku Miyao (@YAYtears)
+# Created by Riku Miyao (@YAYtears)
 
 from backports import csv
 from hearthstone.deckstrings import Deck
 from hearthstone.deckstrings import FormatType
 import json
-#Python3 version https://pillow.readthedocs.io
+# Python3 version https://pillow.readthedocs.io
 from PIL import Image, ImageDraw, ImageFont
 import io
 import os
 import argparse
+import re
+import requests
 
 
-#https://github.com/HearthSim/hs-card-tiles
-tile_url = 'hs-card-tiles/Tiles/'
+# https://github.com/HearthSim/hs-card-tiles
+tile_loc = 'hs-card-tiles/Tiles/'
 
-#https://api.hearthstonejson.com/v1/latest/enUS/cards.collectible.json
+# https://api.hearthstonejson.com/v1/latest/enUS/cards.collectible.json
 cards_json = 'resources/cards.collectible.json'
-#stolen from https://deck.codes/ which was probably stolen from Hearthstone or HDT
+# stolen from https://deck.codes/ which was probably stolen from Hearthstone or HDT
 tile_container_number = 'resources/tile_container_number.png'
 tile_container_open = 'resources/tile_container_open.png'
 star = 'resources/star.png'
@@ -80,7 +79,7 @@ def deck_to_image(deck, name):
     
     master = Image.new('RGBA', (width, height))
     for index, (card, count) in enumerate(cards):
-        image = '{}{}.png'.format(tile_url, card['id'])
+        image = '{}{}.png'.format(tile_loc, card['id'])
         im = Image.open(image)
         minx = 105
         maxx = 221
@@ -144,74 +143,143 @@ def merge(imgs):
         x+=w
     return master
 
-def setup_dirs(url):
-    if not os.path.exists(url):
-        raise Exception('Directory {} does not exist'.format(url))
-    if not os.path.isdir(url):
-        raise Exception('{} is not a directory'.format(url))
+def setup_dirs(path):
+    if not os.path.exists(path):
+        raise Exception('Directory {} does not exist'.format(path))
+    if not os.path.isdir(path):
+        raise Exception('{} is not a directory'.format(path))
     for x in range(ord('A'),ord('Z')+1):
-        addr = '{}/{}'.format(url,chr(x))
+        addr = '{}/{}'.format(path,chr(x))
         if not os.path.exists(addr):
             os.mkdir(addr)
-    addr = '{}/{}'.format(url,'etc')
+    addr = '{}/{}'.format(path,'etc')
     if not os.path.exists(addr):
         os.mkdir(addr)
 
-def process(decklists, deck_url, ordered=False):
+def write_to_csv(deck_dict, code_dest):
+    with open(code_dest, 'w') as f:
+        for name in deck_dict:
+            f.write('{},{}\n'.format(name, ','.join(deck_dict[name])))
+
+def generate_images(deck_dict, dest, ordered=False):
+    for name in deck_dict:
+        deck_imgs = []
+        for deckcode in deck_dict[name]:
+            deck = Deck.from_deckstring(deckcode)
+            if deck != None:
+                img = deck_to_image(deck, name)
+                deck_imgs.append(img)
+        if len(deck_imgs)==0:
+            print('Player {} has no decks'.format(name))
+            continue
+        img = merge(deck_imgs)
+        img = img.convert('RGB')
+        if ordered:
+            if (ord(name[0].upper())>=ord('A') and ord(name[0].upper())<=ord('Z')):
+                img.save(u'{}/{}/{}.jpg'.format(dest,name[0].upper(),name), 'JPEG')
+            else:
+                img.save(u'{}/{}/{}.jpg'.format(dest,'etc',name), 'JPEG')
+        else:
+            img.save(u'{}/{}.jpg'.format(dest,name), 'JPEG')
+
+def decks_from_csv(decklists, dest, ordered=False, code_dest=None):
     if ordered:
-        setup_dirs(deck_url)
-    all_names = {}
+        setup_dirs(dest)
+    deck_dict = {}
     with io.open(decklists, "r", encoding="utf-8") as csvfile:
-        deckreader = csv.reader(csvfile, delimiter=u',')
-        deckreader = list(deckreader)
-        fail = ''
-        schemaLine = deckreader[0]
-        schema = []
-        key = 0
-        for index, x in enumerate(schemaLine):
-            if x=='D':
-                schema.append('D')
-            elif x=='K':
-                schema.append('K')
-                key = index
-            else:
-                schema.append('')
-        for row in deckreader[1:]:
-            name = row[key]
-            name = name.replace('/','\\')
-            if name not in all_names:
-                all_names[name] = []
-            for index, a in enumerate(schema):
-                if a!='D':
-                    continue
-                decklist = find_code(row[index])
-                deck = parse_deck(decklist)
-                all_names[name].append(deck)
-        for name in all_names:
-            deck_imgs = []
-            for deck in all_names[name]:
-                if deck!=None:
-                    img = deck_to_image(deck, name)
-                    deck_imgs.append(img)
-            if len(deck_imgs)==0:
-                print('Player {} has no decks'.format(name))
+        deckreader = list(csv.reader(csvfile, delimiter=u','))
+
+    schemaLine = deckreader[0]
+    schema = []
+    key = 0
+    start = 1
+    for index, x in enumerate(schemaLine):
+        if x=='D':
+            schema.append('D')
+        elif x=='K':
+            schema.append('K')
+            key = index
+        else:
+            schema.append('')
+    if not any(schema):
+        schema = ['K']
+        for i in range(len(schemaLine)-1):
+            schema.append('D')
+        start-=1
+    for row in deckreader[start:]:
+        name = row[key]
+        name = name.replace('/','\\')
+        if name not in deck_dict:
+            deck_dict[name] = []
+        for index, a in enumerate(schema):
+            if a!='D':
                 continue
-            img = merge(deck_imgs)
-            img = img.convert('RGB')
-            if ordered:
-                if (ord(name[0].upper())>=ord('A') and ord(name[0].upper())<=ord('Z')):
-                    img.save(u'{}/{}/{}.jpg'.format(deck_url,name[0].upper(),name), 'JPEG')
-                else:
-                    img.save(u'{}/{}/{}.jpg'.format(deck_url,'etc',name), 'JPEG')
-            else:
-                img.save(u'{}/{}.jpg'.format(deck_url,name), 'JPEG')
+            decklist = find_code(row[index])
+            deck = parse_deck(decklist)
+            if deck!=None:
+                # The base64 package that the hearthstone package uses is weird
+                # in that it can allow for spaces in the middle of thee deckstring
+                # Passing the deckstring directly causes issues when we try to find
+                # the deck code from the piece of text when we pass this deckstring
+                # back in.
+                deck_dict[name].append(deck.as_deckstring)
+    if code_dest:
+        write_to_csv(deck_dict, code_dest)
+    generate_images(deck_dict, dest, ordered)
+
+def decks_from_battlefy(battlefy_url, dest, ordered=False, code_dest=None):
+    if ordered:
+        setup_dirs(dest)
+    deck_dict = {}
+    valid = re.compile(r"^(?:https://)?\/?battlefy.com\/([^:/\s]+)/([^:\/\s]+)/([\w\d]+)/stage/([\w\d]+)/bracket/(d*)$")
+    bracketf= 'https://dtmwra1jsgyb0.cloudfront.net/stages/{}/matches'
+    matchf = 'https://dtmwra1jsgyb0.cloudfront.net/matches/{}?extend%5Btop.team%5D%5Bplayers%5D%5Buser%5D=true&extend%5Bbottom.team%5D%5Bplayers%5D%5Buser%5D=true'
+    matches = valid.match(battlefy_url)
+    if matches is None:
+        print("Unable to parse battlefy url. Please get the bracket from the brackets tab")
+        return
+    groups = matches.groups()
+    org = groups[0]
+    event = groups[1]
+    eventcode = groups[2]
+    stagecode = groups[3]
+    roundNum = groups[4]
+    bracket_url = bracketf.format(stagecode)
+    data = json.loads(requests.get(bracket_url).text)
+    deck_dict = {}
+
+    for x in data:
+        # Check if we need to make an http request by checking if we already have this person's decks
+        if not any(['team' in x[i] and x[i]['team']['name'] not in deck_dict for i in ['top', 'bottom']]):
+            continue
+        r = requests.get(matchf.format(x['_id']))
+        matchdata = json.loads(r.text)
+        for i in ['top', 'bottom']:
+            team = matchdata[0][i]
+            if 'team' not in team or team['team']['name'] in deck_dict:
+                continue
+            name = team['team']['name']
+            decks = team['team']['players'][0]['gameAttributes']['deckStrings']
+            deck_dict[name] = []
+            for decklist in decks:
+                deck = parse_deck(decklist)
+                if deck!=None:
+                    deck_dict[name].append(deck.as_deckstring)
+    if code_dest:
+        write_to_csv(deck_dict, code_dest)
+    generate_images(deck_dict, dest, ordered)
 
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description="create deck images from a csv file")
-    parser.add_argument("deckcsv", help='the csv file containing all the decklists. The first line must be the schema, and all other lines must follow the schema')
+    parser.add_argument("deckcsv", help='the csv file containing all the decklists. The first line specifies the schema. If the schema is not specified [\'K\',\'D\',\'D\',...] is used as the schema')
     parser.add_argument("destination", help='where the images are generated')
+    parser.add_argument("--battlefy", help="if set, the deckcsv argument is now parsed as a battlefy url to scrape decklists off of a battlefy bracket", action="store_true")
     parser.add_argument("--ordered", help="set whether images should be grouped by the first letter of the key", action="store_true")
+    parser.add_argument("--code-dest", help="When set, output the deck codes to a csv file (minus the schema)")
     args = parser.parse_args()
-    process(args.deckcsv, args.destination, ordered=args.ordered)
+    if args.battlefy:
+        decks_from_battlefy(args.deckcsv, args.destination, ordered=args.ordered, code_dest=args.code_dest)
+    else:
+        decks_from_csv(args.deckcsv, args.destination, ordered=args.ordered, code_dest=args.code_dest)
 
