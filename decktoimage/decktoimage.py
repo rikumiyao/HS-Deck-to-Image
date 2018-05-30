@@ -11,6 +11,7 @@ import os
 import argparse
 import re
 import requests
+from html.parser import HTMLParser
 
 
 # https://github.com/HearthSim/hs-card-tiles
@@ -269,17 +270,60 @@ def decks_from_battlefy(battlefy_url, dest, ordered=False, code_dest=None):
         write_to_csv(deck_dict, code_dest)
     generate_images(deck_dict, dest, ordered)
 
+class SmashHTMLParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.extracted = ''
+
+    def handle_data(self, data):
+        if data.strip().startswith("window.bootstrappedData="):
+            self.extracted = data.strip()[len('window.bootstrappedData='):-1]
+
+def decks_from_smashgg(bracket_url, dest, ordered=False, code_dest=None):
+    if ordered:
+        setup_dirs(dest)
+    deck_dict = {}
+    html = requests.get(bracket_url).text
+    parser = SmashHTMLParser()
+    parser.feed(html)
+    data = json.loads(parser.extracted)['dehydratedState']['context']['dispatcher']['stores']
+    hero_map = {617:671, 618:274, 619:31, 620:637, 621:813, 622:930,
+            623:1066, 624:893, 625:7}
+    reverse_map = {}
+    for _, card in data['CardStore']['card'].items():
+        reverse_map[int(card['id'])] = int(card['externalId'])
+    for _, deck in data['CardDeckStore']['cardDeck'].items():
+        name = data['EntrantStore']['entrants'][str(deck['entrantId'])]['name']
+        cards = {}
+        for card in deck['cardIds']:
+            if card not in cards:
+                cards[card] = 0
+            cards[card]+=1
+        hero = hero_map[deck['characterIds'][0]]
+        deck = Deck()
+        deck.heroes = [hero]
+        deck.format = FormatType.FT_STANDARD
+        deck.cards = [(reverse_map[x], cards[x]) for x in cards]
+        if name not in deck_dict:
+            deck_dict[name] = []
+        deck_dict[name].append(deck.as_deckstring)
+    if code_dest:
+        write_to_csv(deck_dict, code_dest)
+    generate_images(deck_dict, dest, ordered)
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description="create deck images from a csv file")
     parser.add_argument("deckcsv", help='the csv file containing all the decklists. The first line specifies the schema. If the schema is not specified [\'K\',\'D\',\'D\',...] is used as the schema')
     parser.add_argument("destination", help='where the images are generated')
     parser.add_argument("--battlefy", help="if set, the deckcsv argument is now parsed as a battlefy url to scrape decklists off of a battlefy bracket", action="store_true")
+    parser.add_argument("--smashgg", help="if set, the deckcsv argument is now parsed as a smashgg url to scrape decklists off of a smashgg bracket", action="store_true")
     parser.add_argument("--ordered", help="set whether images should be grouped by the first letter of the key", action="store_true")
     parser.add_argument("--code-dest", help="When set, output the deck codes to a csv file (minus the schema)")
     args = parser.parse_args()
     if args.battlefy:
         decks_from_battlefy(args.deckcsv, args.destination, ordered=args.ordered, code_dest=args.code_dest)
+    elif args.smashgg:
+        decks_from_smashgg(args.deckcsv, args.destination, ordered=args.ordered, code_dest=args.code_dest)
     else:
         decks_from_csv(args.deckcsv, args.destination, ordered=args.ordered, code_dest=args.code_dest)
 
