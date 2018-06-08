@@ -175,6 +175,7 @@ def generate_images(deck_dict, dest, ordered=False):
             continue
         img = merge(deck_imgs)
         img = img.convert('RGB')
+        name = name.replace('/','\\')
         if ordered:
             if (ord(name[0].upper())>=ord('A') and ord(name[0].upper())<=ord('Z')):
                 img.save(u'{}/{}/{}.jpg'.format(dest,name[0].upper(),name), 'JPEG')
@@ -209,7 +210,6 @@ def decks_from_csv(decklists, dest, ordered=False, code_dest=None):
         start-=1
     for row in deckreader[start:]:
         name = row[key]
-        name = name.replace('/','\\')
         if name not in deck_dict:
             deck_dict[name] = []
         for index, a in enumerate(schema):
@@ -232,7 +232,7 @@ def decks_from_battlefy(battlefy_url, dest, ordered=False, code_dest=None):
     if ordered:
         setup_dirs(dest)
     deck_dict = {}
-    valid = re.compile(r"^(?:https://)?\/?battlefy.com\/([^:/\s]+)/([^:\/\s]+)/([\w\d]+)/stage/([\w\d]+)/bracket/(d*)$")
+    valid = re.compile(r"^(?:https://)?\/?battlefy.com\/([^:/\s]+)/([^:\/\s]+)/([\w\d]+)/stage/([\w\d]+)/bracket/(\d*)$")
     bracketf= 'https://dtmwra1jsgyb0.cloudfront.net/stages/{}/matches'
     matchf = 'https://dtmwra1jsgyb0.cloudfront.net/matches/{}?extend%5Btop.team%5D%5Bplayers%5D%5Buser%5D=true&extend%5Bbottom.team%5D%5Bplayers%5D%5Buser%5D=true'
     matches = valid.match(battlefy_url)

@@ -32,7 +32,8 @@ If you want to update cards.collectible.json, run the curl command again.
 ## Usage
 
 ```
-usage: decktoimage.py [-h] [--battlefy] [--ordered] [--code-dest CODE_DEST]
+usage: decktoimage.py [-h] [--battlefy] [--smashgg] [--ordered]
+                      [--code-dest CODE_DEST]
                       deckcsv destination
 
 create deck images from a csv file
@@ -47,6 +48,9 @@ optional arguments:
   -h, --help            show this help message and exit
   --battlefy            if set, the deckcsv argument is now parsed as a
                         battlefy url to scrape decklists off of a battlefy
+                        bracket
+  --smashgg             if set, the deckcsv argument is now parsed as a
+                        smashgg url to scrape decklists off of a smashgg
                         bracket
   --ordered             set whether images should be grouped by the first
                         letter of the key
