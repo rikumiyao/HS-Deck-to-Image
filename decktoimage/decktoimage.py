@@ -226,7 +226,8 @@ def decks_from_csv(decklists, dest, ordered=False, code_dest=None):
                 deck_dict[name].append(deck.as_deckstring)
     if code_dest:
         write_to_csv(deck_dict, code_dest)
-    generate_images(deck_dict, dest, ordered)
+    else:
+        generate_images(deck_dict, dest, ordered)
 
 def decks_from_battlefy(battlefy_url, dest, ordered=False, code_dest=None):
     if ordered:
@@ -268,7 +269,8 @@ def decks_from_battlefy(battlefy_url, dest, ordered=False, code_dest=None):
                     deck_dict[name].append(deck.as_deckstring)
     if code_dest:
         write_to_csv(deck_dict, code_dest)
-    generate_images(deck_dict, dest, ordered)
+    else:
+        generate_images(deck_dict, dest, ordered)
 
 class SmashHTMLParser(HTMLParser):
     def __init__(self):
@@ -309,7 +311,8 @@ def decks_from_smashgg(bracket_url, dest, ordered=False, code_dest=None):
         deck_dict[name].append(deck.as_deckstring)
     if code_dest:
         write_to_csv(deck_dict, code_dest)
-    generate_images(deck_dict, dest, ordered)
+    else:
+        generate_images(deck_dict, dest, ordered)
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description="create deck images from a csv file")
@@ -318,7 +321,7 @@ if __name__=="__main__":
     parser.add_argument("--battlefy", help="if set, the deckcsv argument is now parsed as a battlefy url to scrape decklists off of a battlefy bracket", action="store_true")
     parser.add_argument("--smashgg", help="if set, the deckcsv argument is now parsed as a smashgg url to scrape decklists off of a smashgg bracket", action="store_true")
     parser.add_argument("--ordered", help="set whether images should be grouped by the first letter of the key", action="store_true")
-    parser.add_argument("--code-dest", help="When set, output the deck codes to a csv file (minus the schema)")
+    parser.add_argument("--code-dest", help="When set, output the deck codes to a csv file instead")
     args = parser.parse_args()
     if args.battlefy:
         decks_from_battlefy(args.deckcsv, args.destination, ordered=args.ordered, code_dest=args.code_dest)

@@ -55,9 +55,7 @@ optional arguments:
   --ordered             set whether images should be grouped by the first
                         letter of the key
   --code-dest CODE_DEST
-                        When set, output the deck codes to a csv file (minus
-                        the schema)
-
+                        When set, output the deck codes to a csv file instead
 ```
 
 ## CSV formatting
