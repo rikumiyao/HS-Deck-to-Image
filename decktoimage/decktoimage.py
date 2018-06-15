@@ -122,6 +122,7 @@ def deck_to_image(deck, name):
         draw_shadow(draw,(34-w)/2,(39-h)/2+39*index,str(card['cost']), font)
         draw.text(((34-w)/2, (39-h)/2+39*index), str(card['cost']), font=font)
         #draw.text()
+    draw = ImageDraw.Draw(master)
     decklist = master.crop((0,0,243,39*len(cards)))
     master.paste(decklist, (0,97,243,39*len(cards)+97))
     master.paste(imclass, (0,0,243,97))
@@ -213,7 +214,7 @@ def decks_from_csv(decklists, dest, ordered=False, code_dest=None):
         if name not in deck_dict:
             deck_dict[name] = []
         for index, a in enumerate(schema):
-            if a!='D':
+            if a!='D' or index >= len(row):
                 continue
             decklist = find_code(row[index])
             deck = parse_deck(decklist)
