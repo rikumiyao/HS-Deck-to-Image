@@ -32,26 +32,22 @@ If you want to update cards.collectible.json, run the curl command again.
 ## Usage
 
 ```
-usage: decktoimage.py [-h] [--battlefy] [--smashgg] [--ordered]
-                      [--code-dest CODE_DEST]
-                      deckcsv destination
+Usage: decktoimage.py [-h] [--ordered] [--code-dest CODE_DEST]
+                      {deckcsv,battlefy,smashgg} sourceFile destination
 
 create deck images from a csv file
 
 positional arguments:
-  deckcsv               the csv file containing all the decklists. The first
-                        line specifies the schema. If the schema is not
-                        specified ['K','D','D',...] is used as the schema
+  {deckcsv,battlefy,smashgg}
+                        The type of source the decklists are from
+  sourceFile            Where to get the decklists from. For the deckcsv
+                        option, specify a csv file in your path. For the other
+                        2 options, specify the bracket url of their respective
+                        websites
   destination           where the images are generated
 
 optional arguments:
   -h, --help            show this help message and exit
-  --battlefy            if set, the deckcsv argument is now parsed as a
-                        battlefy url to scrape decklists off of a battlefy
-                        bracket
-  --smashgg             if set, the deckcsv argument is now parsed as a
-                        smashgg url to scrape decklists off of a smashgg
-                        bracket
   --ordered             set whether images should be grouped by the first
                         letter of the key
   --code-dest CODE_DEST

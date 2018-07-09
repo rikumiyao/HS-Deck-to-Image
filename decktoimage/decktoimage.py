@@ -317,17 +317,16 @@ def decks_from_smashgg(bracket_url, dest, ordered=False, code_dest=None):
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description="create deck images from a csv file")
-    parser.add_argument("deckcsv", help='the csv file containing all the decklists. The first line specifies the schema. If the schema is not specified [\'K\',\'D\',\'D\',...] is used as the schema')
+    parser.add_argument('sourceType', choices=['deckcsv', 'battlefy', 'smashgg'], help='The type of source the decklists are from')
+    parser.add_argument('source', help='Where to get the decklists from. For the deckcsv option, specify a csv file in your path. For the other 2 options, specify the bracket url of their respective websites')
     parser.add_argument("destination", help='where the images are generated')
-    parser.add_argument("--battlefy", help="if set, the deckcsv argument is now parsed as a battlefy url to scrape decklists off of a battlefy bracket", action="store_true")
-    parser.add_argument("--smashgg", help="if set, the deckcsv argument is now parsed as a smashgg url to scrape decklists off of a smashgg bracket", action="store_true")
     parser.add_argument("--ordered", help="set whether images should be grouped by the first letter of the key", action="store_true")
     parser.add_argument("--code-dest", help="When set, output the deck codes to a csv file instead")
     args = parser.parse_args()
-    if args.battlefy:
-        decks_from_battlefy(args.deckcsv, args.destination, ordered=args.ordered, code_dest=args.code_dest)
-    elif args.smashgg:
-        decks_from_smashgg(args.deckcsv, args.destination, ordered=args.ordered, code_dest=args.code_dest)
+    if args.sourceType == 'battlefy':
+        decks_from_battlefy(args.source, args.destination, ordered=args.ordered, code_dest=args.code_dest)
+    elif args.sourceType == 'smashgg':
+        decks_from_smashgg(args.source, args.destination, ordered=args.ordered, code_dest=args.code_dest)
     else:
-        decks_from_csv(args.deckcsv, args.destination, ordered=args.ordered, code_dest=args.code_dest)
+        decks_from_csv(args.source, args.destination, ordered=args.ordered, code_dest=args.code_dest)
 
