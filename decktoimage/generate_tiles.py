@@ -64,31 +64,30 @@ def process(cardid):
     master = Image.alpha_composite(master, gradient)
     draw = ImageDraw.Draw(master)
     font = ImageFont.truetype(deck_font, 15)
+
+    def writeCost(font):
+        msg = str(card['cost'])
+        w, h = draw.textsize(msg, font=font)
+        font = ImageFont.truetype(deck_font, 18)
+        draw_shadow(draw,(44-w)/2,(39-h)/2-1,str(card['cost']), font)
+        draw.text(((44-w)/2, (39-h)/2-1), str(card['cost']), font=font)
     
-    draw_shadow(draw, 39, 13, card['name'], font)
-    draw.text((39, 13), card['name'], font=font)
+    draw_shadow(draw, 45, 13, card['name'], font)
+    draw.text((45, 13), card['name'], font=font)
     if card['rarity']=='LEGENDARY':
         bg = Image.open(tile_container_number)
         master.paste(bg, (0, 0, 239, 39), bg)
         imstar = Image.open(star)
         master.paste(imstar, (214, 10, 233, 29), imstar)
 
-        msg = str(card['cost'])
-        w, h = draw.textsize(msg, font=font)
-        font = ImageFont.truetype(deck_font, 16)
-        draw_shadow(draw,(34-w)/2,(39-h)/2,str(card['cost']), font)
-        draw.text(((34-w)/2, (39-h)/2), str(card['cost']), font=font)
+        writeCost(font)
 
         master.save(u'{}/{}.png'.format(tile_dest,cardid), 'PNG')
     else:
         bg = Image.open(tile_container_open)
         master.paste(bg, (0, 0, 239, 39), bg)
 
-        msg = str(card['cost'])
-        w, h = draw.textsize(msg, font=font)
-        font = ImageFont.truetype(deck_font, 16)
-        draw_shadow(draw,(34-w)/2,(39-h)/2,str(card['cost']), font)
-        draw.text(((34-w)/2, (39-h)/2), str(card['cost']), font=font)
+        writeCost(font)
 
         master.save(u'{}/{}.png'.format(tile_dest,cardid), 'PNG')
 
@@ -99,12 +98,7 @@ def process(cardid):
         w, h = draw.textsize('2', font=font)
         draw.text(((30-w)/2+209,(39-h)/2), '2', font=font, fill=(229, 181, 68))
 
-        
-        msg = str(card['cost'])
-        w, h = draw.textsize(msg, font=font)
-        font = ImageFont.truetype(deck_font, 16)
-        draw_shadow(draw,(34-w)/2,(39-h)/2,str(card['cost']), font)
-        draw.text(((34-w)/2, (39-h)/2), str(card['cost']), font=font)
+        writeCost(font)
 
         master.save(u'{}/{}_2.png'.format(tile_dest,cardid), 'PNG')
 
