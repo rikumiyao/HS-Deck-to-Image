@@ -19,7 +19,7 @@ tile_loc = 'hs-card-tiles/Tiles/'
 
 # https://api.hearthstonejson.com/v1/latest/enUS/cards.collectible.json
 cards_json = 'resources/cards.collectible.json'
-# stolen from https://deck.codes/ which was probably stolen from Hearthstone or HDT
+# generated from the the hearthstone client
 tile_container_number = 'resources/tile_container_number.png'
 tile_container_open = 'resources/tile_container_open.png'
 star = 'resources/star.png'
@@ -99,8 +99,8 @@ def deck_to_image(deck, name):
         draw = ImageDraw.Draw(master)
         font = ImageFont.truetype(deck_font, 15)
 
-        draw_shadow(draw, 39, 13+39*index, card['name'],font)
-        draw.text((39, 13+39*index), card['name'], font=font)
+        draw_shadow(draw, 45, 13+39*index, card['name'],font)
+        draw.text((45, 13+39*index), card['name'], font=font)
 
         if count==2:
             bg = Image.open(tile_container_number)
@@ -117,11 +117,10 @@ def deck_to_image(deck, name):
             bg = Image.open(tile_container_open)
             master.paste(bg, (0,39*index, 239, 39*(index+1)), bg)
         msg = str(card['cost'])
-        w, h = draw.textsize(msg, font=font)
         font = ImageFont.truetype(deck_font, 16)
-        draw_shadow(draw,(34-w)/2,(39-h)/2+39*index,str(card['cost']), font)
-        draw.text(((34-w)/2, (39-h)/2+39*index), str(card['cost']), font=font)
-        #draw.text()
+        w, h = draw.textsize(msg, font=font)
+        draw_shadow(draw,(44-w)/2,(39-h)/2+39*index,str(card['cost']), font)
+        draw.text(((44-w)/2, (39-h)/2+39*index), str(card['cost']), font=font)
     draw = ImageDraw.Draw(master)
     decklist = master.crop((0,0,243,39*len(cards)))
     master.paste(decklist, (0,97,243,39*len(cards)+97))
