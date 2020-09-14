@@ -68,6 +68,7 @@ def parse_deck(text):
     return None
 
 def deck_to_image(deck, name):
+    #TODO: fix gradient, fix other layout
     if deck.heroes[0] not in card_dict:
         print(deck.as_deckstring)
     hero = card_dict[deck.heroes[0]]
@@ -76,15 +77,20 @@ def deck_to_image(deck, name):
     cards.sort(key = lambda x:(x[0]['cost'], x[0]['name']))
     width = 243
     height = 39 * len(cards) + imclass.size[1]
-    xoff = 105
     
     master = Image.new('RGBA', (width, height))
     for index, (card, count) in enumerate(cards):
         image = '{}{}.png'.format(tile_loc, card['id'])
         im = Image.open(image)
-        minx = 105
-        maxx = 221
         color_palette = [(41,48,58,255), (93, 68, 68, 0)]
+        if count==2 or card['rarity']=='LEGENDARY':
+            xoff = 81
+            minx = 105
+            maxx = 221
+        else:
+            xoff = 105
+            minx = 129
+            maxx = 245
         master.paste(im, (xoff,3+39*index, xoff+130, 39*(index+1)-2))
 
         gradient = Image.new('RGBA', (width, height))
