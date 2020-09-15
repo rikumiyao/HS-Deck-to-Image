@@ -25,7 +25,7 @@ tile_container_open = 'resources/tile_container_open.png'
 star = 'resources/star.png'
 
 deck_font = 'resources/Belwe-Bold.ttf'
-name_font = 'resources/NotoSansCJK-Bold.ttc'
+name_font = 'resources/Belwe-Bold.ttf'
 
 card_dict = {}
 with open(cards_json, encoding="utf-8") as json_file:
@@ -76,15 +76,20 @@ def deck_to_image(deck, name):
     cards.sort(key = lambda x:(x[0]['cost'], x[0]['name']))
     width = 243
     height = 39 * len(cards) + imclass.size[1]
-    xoff = 105
     
     master = Image.new('RGBA', (width, height))
     for index, (card, count) in enumerate(cards):
         image = '{}{}.png'.format(tile_loc, card['id'])
         im = Image.open(image)
-        minx = 105
-        maxx = 221
         color_palette = [(41,48,58,255), (93, 68, 68, 0)]
+        if count==2 or card['rarity']=='LEGENDARY':
+            xoff = 81
+            minx = 105
+            maxx = 221
+        else:
+            xoff = 105
+            minx = 129
+            maxx = 245
         master.paste(im, (xoff,3+39*index, xoff+130, 39*(index+1)-2))
 
         gradient = Image.new('RGBA', (width, height))
@@ -97,10 +102,14 @@ def deck_to_image(deck, name):
         
         master = Image.alpha_composite(master, gradient)
         draw = ImageDraw.Draw(master)
-        font = ImageFont.truetype(deck_font, 15)
 
-        draw_shadow(draw, 45, 13+39*index, card['name'],font)
-        draw.text((45, 13+39*index), card['name'], font=font)
+        if len(card['name'])>22:
+            deck_font_size = 12
+        else:
+            deck_font_size = 13
+        font = ImageFont.truetype(deck_font, deck_font_size)
+        draw_shadow(draw, 45, 27-deck_font_size+39*index, card['name'],font)
+        draw.text((45, 27-deck_font_size+39*index), card['name'], font=font)
 
         if count==2:
             bg = Image.open(tile_container_number)
@@ -117,7 +126,7 @@ def deck_to_image(deck, name):
             bg = Image.open(tile_container_open)
             master.paste(bg, (0,39*index, 239, 39*(index+1)), bg)
         msg = str(card['cost'])
-        font = ImageFont.truetype(deck_font, 16)
+        font = ImageFont.truetype(deck_font, 22)
         w, h = draw.textsize(msg, font=font)
         draw_shadow(draw,(44-w)/2,(39-h)/2+39*index,str(card['cost']), font)
         draw.text(((44-w)/2, (39-h)/2+39*index), str(card['cost']), font=font)
@@ -125,12 +134,12 @@ def deck_to_image(deck, name):
     decklist = master.crop((0,0,243,39*len(cards)))
     master.paste(decklist, (0,97,243,39*len(cards)+97))
     master.paste(imclass, (0,0,243,97))
-    font = ImageFont.truetype(name_font, 19)
+    font = ImageFont.truetype(name_font, 24)
     #title = u'{} {}'.format(name, hero['playerClass'][0]+hero['playerClass'][1:].lower())
     title = name
     w,h = draw.textsize(title, font=font)
-    draw_shadow(draw, 22, 75-h, title, font)
-    draw.text((22, 75-h), title, font=font)
+    draw_shadow(draw, 22, 72-h, title, font)
+    draw.text((22, 72-h), title, font=font)
     return master
 
 def merge(imgs):
