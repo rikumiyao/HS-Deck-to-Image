@@ -102,10 +102,14 @@ def deck_to_image(deck, name):
         
         master = Image.alpha_composite(master, gradient)
         draw = ImageDraw.Draw(master)
-        font = ImageFont.truetype(deck_font, 13)
 
-        draw_shadow(draw, 45, 14+39*index, card['name'],font)
-        draw.text((45, 14+39*index), card['name'], font=font)
+        if len(card['name'])>22:
+            deck_font_size = 12
+        else:
+            deck_font_size = 13
+        font = ImageFont.truetype(deck_font, deck_font_size)
+        draw_shadow(draw, 45, 27-deck_font_size+39*index, card['name'],font)
+        draw.text((45, 27-deck_font_size+39*index), card['name'], font=font)
 
         if count==2:
             bg = Image.open(tile_container_number)
