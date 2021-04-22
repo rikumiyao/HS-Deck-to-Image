@@ -17,7 +17,7 @@ from itertools import repeat
 from multiprocessing.pool import Pool
 
 
-NUM_PROCESSES = 24
+NUM_PROCESSES = os.cpu_count()
 
 # https://github.com/HearthSim/hs-card-tiles
 tile_loc = 'hs-card-tiles/Tiles/'
